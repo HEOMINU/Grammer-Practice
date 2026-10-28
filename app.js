@@ -139,7 +139,10 @@ const modelByNo={
 };
 function ruleFor(no){return pdfRules.find(r=>no>=r[0]&&no<=r[1])||pdfRules[pdfRules.length-1]}
 function splitCriteria(model){const clean=model.replace(/[(),.·]/g,' '),words=clean.split(/\s+/).filter(x=>x.length>1);const picks=[words.slice(0,Math.ceil(words.length/3)).join(' '),words.slice(Math.ceil(words.length/3),Math.ceil(words.length*2/3)).join(' '),words.slice(Math.ceil(words.length*2/3)).join(' ')].filter(Boolean);return picks.map((v,i)=>({name:['핵심 의미 앞부분','문장 관계와 동작','핵심 표현과 마무리'][i]||'핵심 의미',terms:[v]}))}
-const pdfTranslationBank=Object.entries(pdfExamples).map(([num,en])=>({no:Number(num),en,model:modelByNo[num],...(()=>{const r=ruleFor(Number(num));return{topic:r[2],grammar:r[3],memorize:r[4],focus:[r[2],'POINT '+String(r[0]).padStart(3,'0')+'–'+String(r[1]).padStart(3,'0')],steps:[`① 문장의 중심 동사와 주어를 먼저 찾습니다. 이 문장은 ${r[2]} 유형입니다.`,`② 주어와 동사, 목적어·보어가 어떤 관계인지 확인합니다.`,`③ ${r[3]}`,`④ ${modelByNo[num]}`],checks:splitCriteria(modelByNo[num]||'')}}})()}));
+const pdfTranslationBank=Object.entries(pdfExamples).map(([num,en])=>{
+ const no=Number(num), rule=ruleFor(no), model=modelByNo[num]||'문장의 핵심 구조와 의미를 파악해 자연스럽게 해석합니다.';
+ return {no,en,model,topic:rule[2],grammar:rule[3],memorize:rule[4],focus:[rule[2],'POINT '+String(rule[0]).padStart(3,'0')+'–'+String(rule[1]).padStart(3,'0')],steps:[`① 문장의 중심 동사와 주어를 먼저 찾습니다. 이 문장은 ${rule[2]} 유형입니다.`,`② 주어와 동사, 목적어·보어가 어떤 관계인지 확인합니다.`,`③ ${rule[3]}`,`④ ${model}`],checks:splitCriteria(model)};
+});
 // 원문 PDF 안에서 같은 예문으로 다시 나온 044, 045는 문장 해석 세트에서 제거
 const seenPdf=new Set();for(let i=0;i<pdfTranslationBank.length;i++){const key=pdfTranslationBank[i].en.toLowerCase().replace(/[^a-z0-9]/g,'');if(seenPdf.has(key)){pdfTranslationBank.splice(i,1);i--}else seenPdf.add(key)}
 bank.splice(0,bank.length,...pdfTranslationBank);
@@ -183,6 +186,7 @@ function gradeOxNew(answer){if(studyAnswered)return;const q=studyQuestions[study
 window.revealAnswer=function(){ answer.scrollIntoView({behavior:'smooth',block:'center'}) };function nextStudyNew(){studyIndex++;if(studyIndex>=studyQuestions.length){showToast('한 바퀴 완료! 새 순서로 다시 시작합니다.');beginStudyNew(studyMode);return}renderStudyQuestionNew()}
 function shuffleCurrentNew(){if(!studyQuestions||!studyQuestions.length)return;studyOrder=Array.from({length:studyQuestions.length},(_,i)=>i).sort(()=>Math.random()-.5);studyIndex=0;renderStudyQuestionNew();showToast('문제 순서를 새로 섞었어요.');window.scrollTo({top:0,behavior:'smooth'})}
 document.querySelectorAll('.mode-card')[0].onclick=()=>beginStudyNew('memory');document.querySelectorAll('.mode-card')[1].onclick=()=>beginStudyNew('grammar');document.querySelectorAll('.mode-card')[2].onclick=()=>beginStudyNew('ox');$('submit').onclick=gradeStudyNew;document.querySelector('#result .primary').onclick=nextStudyNew;$('shuffleQuestions').onclick=shuffleCurrentNew;$('grammarTotal').textContent=pdfTranslationBank.length+'개 PDF 문장';$('oxTotal').textContent=oxBank.length+'문항';$('memoryTotal').textContent=memoryBank.length+'개 핵심 항목';
+
 
 
 
